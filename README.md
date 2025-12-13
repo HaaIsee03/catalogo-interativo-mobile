@@ -36,17 +36,17 @@ Aplicativo de e-commerce moderno desenvolvido com **React Native (Expo)**, focad
 **Categorias (Grade)**
 | Moda Masculina | Moda Feminina |
 |:---:|:---:|
-| <img src="./assets/images/screenshots/pc/home1.png" width="400" /> | <img src="./assets/images/screenshots/pc/home2.png" width="400" /> |
+| <img src="./assets/images/screenshots/web/home1.png" width="400" /> | <img src="./assets/images/screenshots/web/home2.png" width="400" /> |
 
 **Detalhes do Produto**
 | Visualização (Lado a Lado) | Item Adicionado (Modal) |
 |:---:|:---:|
-| <img src="./assets/images/screenshots/pc/detalhes1.png" width="400" /> | <img src="./assets/images/screenshots/pc/detalhes2.png" width="400" /> |
+| <img src="./assets/images/screenshots/web/detalhes1.png" width="400" /> | <img src="./assets/images/screenshots/web/detalhes2.png" width="400" /> |
 
 **Carrinho de Compras**
 | Lista de Itens | Confirmação de Pedido |
 |:---:|:---:|
-| <img src="./assets/images/screenshots/pc/carrinho1.png" width="400" /> | <img src="./assets/images/screenshots/pc/carrinho2.png" width="400" /> |
+| <img src="./assets/images/screenshots/web/carrinho1.png" width="400" /> | <img src="./assets/images/screenshots/web/carrinho2.png" width="400" /> |
 
 ---
 
