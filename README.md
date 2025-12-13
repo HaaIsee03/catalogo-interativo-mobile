@@ -22,12 +22,12 @@ Aplicativo de e-commerce moderno desenvolvido com **React Native (Expo)**, focad
 **Navegação e Categorias**
 | Login | Perfil | Home (Masculino) | Home (Feminino) |
 |:---:|:---:|:---:|:---:|
-| <img src="./assets/screenshots/mobile/login.png" width="180" /> | <img src="./assets/screenshots/mobile/perfil.png" width="180" /> | <img src="./assets/screenshots/mobile/home1.png" width="180" /> | <img src="./assets/screenshots/mobile/home2.png" width="180" /> |
+| <img src="./assets/images/screenshots/mobile/login.png" width="180" /> | <img src="./assets/images/screenshots/mobile/perfil.png" width="180" /> | <img src="./assets/images/screenshots/mobile/home1.png" width="180" /> | <img src="./assets/images/screenshots/mobile/home2.png" width="180" /> |
 
 **Fluxo de Compra**
 | Ver Produto | Add ao Carrinho | Ver Carrinho | Pedido Finalizado |
 |:---:|:---:|:---:|:---:|
-| <img src="./assets/screenshots/mobile/detalhes1.png" width="180" /> | <img src="./assets/screenshots/mobile/detalhes2.png" width="180" /> | <img src="./assets/screenshots/mobile/carrinho1.png" width="180" /> | <img src="./assets/screenshots/mobile/carrinho2.png" width="180" /> |
+| <img src="./assets/images/screenshots/mobile/detalhes1.png" width="180" /> | <img src="./assets/images/screenshots/mobile/detalhes2.png" width="180" /> | <img src="./assets/images/screenshots/mobile/carrinho1.png" width="180" /> | <img src="./assets/images/screenshots/mobile/carrinho2.png" width="180" /> |
 
 ---
 
@@ -36,17 +36,17 @@ Aplicativo de e-commerce moderno desenvolvido com **React Native (Expo)**, focad
 **Categorias (Grade)**
 | Moda Masculina | Moda Feminina |
 |:---:|:---:|
-| <img src="./assets/screenshots/pc/home1.png" width="400" /> | <img src="./assets/screenshots/pc/home2.png" width="400" /> |
+| <img src="./assets/images/screenshots/pc/home1.png" width="400" /> | <img src="./assets/images/screenshots/pc/home2.png" width="400" /> |
 
 **Detalhes do Produto**
 | Visualização (Lado a Lado) | Item Adicionado (Modal) |
 |:---:|:---:|
-| <img src="./assets/screenshots/pc/detalhes1.png" width="400" /> | <img src="./assets/screenshots/pc/detalhes2.png" width="400" /> |
+| <img src="./assets/images/screenshots/pc/detalhes1.png" width="400" /> | <img src="./assets/images/screenshots/pc/detalhes2.png" width="400" /> |
 
 **Carrinho de Compras**
 | Lista de Itens | Confirmação de Pedido |
 |:---:|:---:|
-| <img src="./assets/screenshots/pc/carrinho1.png" width="400" /> | <img src="./assets/screenshots/pc/carrinho2.png" width="400" /> |
+| <img src="./assets/images/screenshots/pc/carrinho1.png" width="400" /> | <img src="./assets/images/screenshots/pc/carrinho2.png" width="400" /> |
 
 ---
 
