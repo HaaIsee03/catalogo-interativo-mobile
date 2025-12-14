@@ -1,215 +1,360 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+
+import { WebFooter } from '../components/WebFooter';
 import { useCart } from '../contexts/CartContext';
-import { useTheme } from '../contexts/ThemeContext'; // <--- TEMA
+import { useTheme } from '../contexts/ThemeContext';
 import api from '../services/api';
 import { formatCurrency } from '../utils/format';
 import { translateProduct } from '../utils/translator';
 
 const MAX_DETAIL_WIDTH = 1100;
 
+const fakeReviews = [
+  { id: 1, user: 'Maria C.', rating: 5, comment: 'Camisa linda e o tecido é ótimo!' },
+  { id: 2, user: 'João S.', rating: 4, comment: 'Boa qualidade, recomendo.' },
+];
+
 export default function ProductDetailsScreen({ route, navigation }) {
   const { productId } = route.params;
   const { addToCart } = useCart();
-  const { theme } = useTheme(); // <--- USANDO O TEMA
-  
+  const { theme } = useTheme();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [myRating, setMyRating] = useState(0);
-  const [modalVisible, setModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
+
+  const [commentText, setCommentText] = useState('');
+  const [commentError, setCommentError] = useState('');
+
+  const [cartModalVisible, setCartModalVisible] = useState(false);
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
 
   const { width } = useWindowDimensions();
   const isDesktop = width > 768;
 
   useEffect(() => {
-    const fetchDetails = async () => {
+    async function fetchDetails() {
       try {
         const response = await api.get(`/products/${productId}`);
-        const translatedItem = translateProduct(response.data);
-        setProduct(translatedItem);
-        setMyRating(0); 
-      } catch (error) {
-        console.error(error);
+        setProduct(translateProduct(response.data));
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
-    };
+    }
     fetchDetails();
   }, [productId]);
 
-  const increaseQty = () => setQuantity(q => q + 1);
-  const decreaseQty = () => setQuantity(q => (q > 1 ? q - 1 : 1));
+  if (loading) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    setModalVisible(true);
-  };
-
-  const handleContinueShopping = () => {
-    setModalVisible(false);
-    navigation.navigate('Home');
-  };
-
-  if (loading) return <View style={[styles.center, {backgroundColor: theme.background}]}><ActivityIndicator size="large" color={theme.primary} /></View>;
-  if (!product) return <View style={[styles.center, {backgroundColor: theme.background}]}><Text style={{color: theme.text}}>Produto não encontrado.</Text></View>;
+  if (!product) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: theme.text }}>Produto não encontrado</Text>
+      </View>
+    );
+  }
 
   const priceInReal = product.price * 5.5;
+  const originalPrice = priceInReal / (1 - product.discountPercentage / 100);
 
-  const renderStars = () => {
-    let stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <TouchableOpacity key={i} onPress={() => setMyRating(i)}>
-          <Ionicons name={i <= myRating ? "star" : "star-outline"} size={32} color="#FFD700" style={{ marginRight: 5 }} />
-        </TouchableOpacity>
-      );
-    }
-    return <View style={styles.starContainer}>{stars}</View>;
+  const renderStars = rating => (
+    <View style={{ flexDirection: 'row' }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <Ionicons
+          key={i}
+          name={i <= rating ? 'star' : 'star-outline'}
+          size={18}
+          color="#FFD700"
+        />
+      ))}
+    </View>
+  );
+
+  const handleAdd = () => {
+    addToCart(product, quantity);
+    setCartModalVisible(true);
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }, isDesktop && styles.desktopContainer]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        <View style={[styles.contentWrapper, isDesktop && styles.contentWrapperDesktop]}>
-            {/* Imagem com fundo do tema surface (ex: branco ou cinza escuro) */}
-            <View style={[styles.imageContainer, { backgroundColor: theme.surface }, isDesktop && styles.imageContainerDesktop]}>
-                <Image source={{ uri: product.thumbnail }} style={styles.image} resizeMode="contain" />
-            </View>
+  /** 🔥 NAVEGAÇÃO CORRETA PARA TAB */
+  const goCart = () => {
+    setCartModalVisible(false);
+    navigation.navigate('Home', { screen: 'Carrinho' });
+  };
 
-            {/* Detalhes */}
-            <View style={[styles.detailsContainer, { backgroundColor: theme.surface }, isDesktop && styles.detailsContainerDesktop]}>
-              <Text style={[styles.brand, { color: theme.textSecondary }]}>{product.brand || 'Genérico'}</Text>
-              <Text style={[styles.title, { color: theme.text }]}>{product.title}</Text>
+  const handlePostComment = () => {
+    if (!commentText) {
+      setCommentError('Escreva um comentário.');
+      return;
+    }
+    setCommentError('');
+    setCommentText('');
+    setCommentModalVisible(true);
+  };
 
-              <View style={styles.generalRatingContainer}>
-                <Ionicons name="star" size={18} color="#FFD700" />
-                <Text style={[styles.generalRatingText, { color: theme.textSecondary }]}>
-                    Nota Geral: {product.rating.toFixed(1)} / 5.0
-                </Text>
-              </View>
+  const Content = (
+    <>
+      {/* BOTÃO VOLTAR */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={22} color="#fff" />
+      </TouchableOpacity>
 
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+      {/* IMAGEM */}
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: product.thumbnail }} style={styles.image} resizeMode="contain" />
+      </View>
 
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Dê sua avaliação:</Text>
-              {renderStars()}
-              
-              {/* Linha de Preço e Quantidade */}
-              <View style={styles.priceRow}>
-                <View>
-                    <Text style={[styles.price, { color: theme.primary }]}>{formatCurrency(priceInReal)}</Text>
-                    <Text style={styles.discountText}>{Math.round(product.discountPercentage)}% OFF</Text>
-                </View>
+      {/* DETALHES */}
+      <View style={styles.detailsContainer}>
+        <Text style={[styles.title, { color: theme.text }]}>{product.title}</Text>
+        {renderStars(Math.round(product.rating))}
 
-                <View style={[styles.qtyContainer, { backgroundColor: theme.background }]}>
-                    <TouchableOpacity onPress={decreaseQty} style={[styles.qtyButton, { backgroundColor: theme.surface }]}>
-                        <Ionicons name="remove" size={20} color={theme.text} />
-                    </TouchableOpacity>
-                    <Text style={[styles.qtyText, { color: theme.text }]}>{quantity}</Text>
-                    <TouchableOpacity onPress={increaseQty} style={[styles.qtyButton, { backgroundColor: theme.surface }]}>
-                        <Ionicons name="add" size={20} color={theme.text} />
-                    </TouchableOpacity>
-                </View>
-              </View>
+        <Text style={styles.originalPrice}>{formatCurrency(originalPrice)}</Text>
+        <Text style={[styles.price, { color: theme.text }]}>{formatCurrency(priceInReal)}</Text>
+        <Text style={styles.discountText}>{Math.round(product.discountPercentage)}% OFF</Text>
 
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        {/* QUANTIDADE */}
+        <View style={styles.qtyContainer}>
+          <TouchableOpacity
+            style={[styles.qtyBtn, { borderColor: theme.border }]}
+            onPress={() => setQuantity(q => Math.max(1, q - 1))}
+          >
+            <Ionicons name="remove" size={18} color={theme.text} />
+          </TouchableOpacity>
 
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Descrição</Text>
-              <Text style={[styles.description, { color: theme.textSecondary }]}>
-                {product.description}
-              </Text>
+          <Text style={[styles.qtyText, { color: theme.text }]}>{quantity}</Text>
 
-              {/* Botão Desktop */}
-              {isDesktop && (
-                 <TouchableOpacity style={[styles.buyButton, { marginTop: 30, backgroundColor: theme.primary }]} onPress={handleAddToCart}>
-                    <Text style={styles.buyButtonText}>Adicionar ao Carrinho - {formatCurrency(priceInReal * quantity)}</Text>
-                    <Ionicons name="cart" size={20} color="#fff" />
-                </TouchableOpacity>
-              )}
-            </View>
-        </View>
-      </ScrollView>
-
-      {/* Botão Mobile */}
-      {!isDesktop && (
-        <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-          <TouchableOpacity style={[styles.buyButton, { backgroundColor: theme.primary }]} onPress={handleAddToCart}>
-              <Text style={styles.buyButtonText}>Adicionar - {formatCurrency(priceInReal * quantity)}</Text>
-              <Ionicons name="cart" size={20} color="#fff" />
+          <TouchableOpacity
+            style={[styles.qtyBtn, { borderColor: theme.border }]}
+            onPress={() => setQuantity(q => q + 1)}
+          >
+            <Ionicons name="add" size={18} color={theme.text} />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.buyButton} onPress={handleAdd}>
+          <Text style={styles.buyButtonText}>Adicionar ao Carrinho</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* DESCRIÇÃO */}
+      <View style={[styles.sectionContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Descrição</Text>
+        <Text style={{ color: theme.textSecondary }}>{product.description}</Text>
+      </View>
+
+      {/* AVALIAÇÕES */}
+      <View style={[styles.sectionContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Avaliações</Text>
+
+        <TextInput
+          placeholder="Escreva um comentário"
+          placeholderTextColor={theme.textSecondary}
+          value={commentText}
+          onChangeText={setCommentText}
+          style={[
+            styles.commentInput,
+            {
+              backgroundColor: theme.background,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          multiline
+        />
+
+        <TouchableOpacity style={styles.commentButton} onPress={handlePostComment}>
+          <Text style={styles.commentButtonText}>Enviar Comentário</Text>
+        </TouchableOpacity>
+
+        {commentError !== '' && (
+          <Text style={{ color: '#D32F2F', marginTop: 6 }}>{commentError}</Text>
+        )}
+
+        {fakeReviews.map(r => (
+          <View key={r.id} style={{ marginTop: 12 }}>
+            <Text style={{ color: theme.text }}>{r.user}</Text>
+            {renderStars(r.rating)}
+            <Text style={{ color: theme.textSecondary }}>{r.comment}</Text>
+          </View>
+        ))}
+      </View>
+
+      {Platform.OS === 'web' && <WebFooter />}
+    </>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {Platform.OS === 'web' ? (
+        <View style={styles.webScroll}>
+          <View style={styles.webInner}>{Content}</View>
+        </View>
+      ) : (
+        <ScrollView>{Content}</ScrollView>
       )}
 
-      {/* Modal de Sucesso */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Ionicons name="checkmark-circle" size={64} color="#4CAF50" />
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Sucesso!</Text>
-            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>{quantity} item(ns) adicionado(s) ao carrinho.</Text>
-            
-            <TouchableOpacity 
-              style={styles.modalButton} 
-              onPress={handleContinueShopping}
+      {/* MODAL CARRINHO */}
+      <Modal transparent visible={cartModalVisible} animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={[styles.popupCard, { backgroundColor: theme.surface }]}>
+            {/* X */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setCartModalVisible(false)}
             >
-              <Text style={styles.modalButtonText}>Continuar Comprando</Text>
+              <Ionicons name="close" size={22} color={theme.text} />
+            </TouchableOpacity>
+
+            <Ionicons name="cart" size={56} color={theme.primary} />
+            <Text style={[styles.popupTitle, { color: theme.text }]}>
+              Produto adicionado!
+            </Text>
+
+            <TouchableOpacity style={styles.popupPrimaryBtn} onPress={goCart}>
+              <Text style={styles.popupPrimaryText}>Ir para o Carrinho</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setCartModalVisible(false)}>
+              <Text style={styles.popupSecondaryText}>Continuar Comprando</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* MODAL COMENTÁRIO */}
+      <Modal transparent visible={commentModalVisible} animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={[styles.popupCard, { backgroundColor: theme.surface }]}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setCommentModalVisible(false)}
+            >
+              <Ionicons name="close" size={22} color={theme.text} />
+            </TouchableOpacity>
+
+            <Text style={[styles.popupTitle, { color: theme.text }]}>
+              Comentário enviado!
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  desktopContainer: {
-    maxWidth: MAX_DETAIL_WIDTH, width: '100%', alignSelf: 'center',
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10,
-    marginTop: 20, borderRadius: 20, marginBottom: 20, overflow: 'hidden'
-  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 100 },
-  contentWrapper: { flexDirection: 'column' },
-  contentWrapperDesktop: { flexDirection: 'row', alignItems: 'flex-start', padding: 20 },
-  imageContainer: { width: '100%', height: 300, justifyContent: 'center', padding: 20 },
-  imageContainerDesktop: { width: '50%', height: 500, borderRightWidth: 0 }, 
-  image: { width: '100%', height: '100%' },
-  detailsContainer: { 
-    padding: 24, borderTopLeftRadius: 30, borderTopRightRadius: 30, marginTop: -20, 
-    shadowColor: "#000", shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.03, shadowRadius: 10 
+
+  webScroll: { height: '100vh', overflowY: 'auto' },
+  webInner: { maxWidth: MAX_DETAIL_WIDTH, marginHorizontal: 'auto' },
+
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 10,
+    backgroundColor: '#0008',
+    padding: 8,
+    borderRadius: 20,
   },
-  detailsContainerDesktop: { width: '50%', marginTop: 0, borderRadius: 0, shadowOpacity: 0, paddingTop: 0, paddingLeft: 40 },
-  brand: { fontSize: 14, textTransform: 'uppercase', fontWeight: 'bold' },
-  title: { fontSize: 26, fontWeight: 'bold', marginBottom: 5 },
-  generalRatingContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  generalRatingText: { fontSize: 16, fontWeight: '600', marginLeft: 5 },
-  label: { fontSize: 14, marginBottom: 5 },
-  starContainer: { flexDirection: 'row', marginBottom: 5 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: 10 },
-  price: { fontSize: 28, fontWeight: 'bold' },
-  discountText: { color: '#D32F2F', fontWeight: 'bold', fontSize: 14 },
-  qtyContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, padding: 5 },
-  qtyButton: { width: 35, height: 35, justifyContent: 'center', alignItems: 'center', borderRadius: 5, elevation: 1 },
-  qtyText: { marginHorizontal: 15, fontSize: 18, fontWeight: 'bold' },
-  divider: { height: 1, marginVertical: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  description: { fontSize: 16, lineHeight: 24 },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, borderTopWidth: 1, elevation: 10 },
-  buyButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 16, borderRadius: 16, shadowColor: "#4A90E2", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5 },
-  buyButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginRight: 10 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: 300, borderRadius: 20, padding: 30, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
-  modalTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 15, marginBottom: 10 },
-  modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  modalButton: { backgroundColor: '#4CAF50', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 30, elevation: 2 },
-  modalButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+
+  imageContainer: { height: 300 },
+  image: { width: '100%', height: '100%' },
+
+  detailsContainer: { padding: 20 },
+  title: { fontSize: 22, fontWeight: 'bold' },
+  price: { fontSize: 26, fontWeight: 'bold' },
+  originalPrice: { textDecorationLine: 'line-through', color: '#999' },
+  discountText: { color: '#D32F2F' },
+
+  qtyContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
+  qtyBtn: { borderWidth: 1, padding: 6, borderRadius: 6 },
+  qtyText: { marginHorizontal: 15, fontSize: 18 },
+
+  buyButton: {
+    backgroundColor: '#4A90E2',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buyButtonText: { color: '#fff', fontWeight: 'bold' },
+
+  sectionContainer: {
+    padding: 20,
+    margin: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 6 },
+
+  commentInput: {
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  commentButton: {
+    backgroundColor: '#4A90E2',
+    padding: 10,
+    borderRadius: 8,
+  },
+  commentButtonText: { color: '#fff', textAlign: 'center' },
+
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: '#0008',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupCard: {
+    padding: 25,
+    borderRadius: 20,
+    width: 300,
+    position: 'relative',
+  },
+  popupTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+
+  popupPrimaryBtn: {
+    backgroundColor: '#4A90E2',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  popupPrimaryText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+
+  popupSecondaryText: {
+    textAlign: 'center',
+    marginTop: 10,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
+
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+  },
 });

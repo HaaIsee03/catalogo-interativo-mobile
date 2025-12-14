@@ -1,116 +1,195 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+
 import { useCart } from '../contexts/CartContext';
-import { useTheme } from '../contexts/ThemeContext'; // <--- IMPORTAR TEMA
+import { useTheme } from '../contexts/ThemeContext';
 import { formatCurrency } from '../utils/format';
 
-export default function CartScreen() {
-  const { cart, removeFromCart, clearCart, cartTotal } = useCart();
-  const { theme } = useTheme(); // <--- USAR TEMA
-  const [modalVisible, setModalVisible] = useState(false);
+const MAX_WIDTH = 1100;
 
-  const handleFinish = () => {
-    if (cart.length === 0) {
-      alert("Seu carrinho está vazio!");
-      return;
-    }
-    setModalVisible(true);
-  };
+export default function CartScreen({ navigation }) {
+  const {
+    cart,
+    removeFromCart,
+    increaseQuantity,
+    decreaseQuantity,
+    cartTotal,
+  } = useCart();
 
-  const closeAndClear = () => {
-    setModalVisible(false);
-    clearCart();
-  };
+  const { theme } = useTheme();
 
-  if (cart.length === 0) {
+  const renderItem = ({ item }) => {
+    const price = item.price * 5.5;
+
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
-        <Ionicons name="cart-outline" size={64} color={theme.textSecondary} />
-        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Seu carrinho está vazio.</Text>
+      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+        <Image source={{ uri: item.thumbnail }} style={styles.image} />
+
+        <View style={styles.info}>
+          <Text style={[styles.title, { color: theme.text }]}>
+            {item.title}
+          </Text>
+
+          <Text style={[styles.price, { color: theme.primary }]}>
+            {formatCurrency(price)}
+          </Text>
+
+          <View style={styles.qtyContainer}>
+            <TouchableOpacity
+              style={styles.qtyBtn}
+              onPress={() => decreaseQuantity(item.id)}
+            >
+              <Ionicons name="remove" size={16} color={theme.text} />
+            </TouchableOpacity>
+
+            <Text style={[styles.qtyText, { color: theme.text }]}>
+              {item.quantity}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.qtyBtn}
+              onPress={() => increaseQuantity(item.id)}
+            >
+              <Ionicons name="add" size={16} color={theme.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity onPress={() => removeFromCart(item.id)}>
+          <Ionicons name="trash-bin" size={20} color="#D32F2F" />
+        </TouchableOpacity>
       </View>
     );
-  }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <FlatList
-        data={cart}
-        keyExtractor={(item, index) => item.id.toString() + index}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        renderItem={({ item }) => (
-          <View style={[styles.item, { backgroundColor: theme.surface }]}>
-            <Image source={{ uri: item.thumbnail }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>{item.title}</Text>
-              <View style={styles.priceRow}>
-                 <Text style={[styles.price, { color: theme.primary }]}>{formatCurrency(item.price * 5.5)}</Text>
-                 <Text style={[styles.qtyBadge, { color: theme.textSecondary, backgroundColor: theme.background }]}>x {item.quantity}</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-              <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-      
-      <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-        <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: theme.text }]}>Total:</Text>
-          <Text style={styles.totalValue}>{formatCurrency(cartTotal)}</Text>
-        </View>
-        <TouchableOpacity style={styles.checkoutButton} onPress={handleFinish}>
-          <Text style={styles.checkoutText}>FINALIZAR COMPRA</Text>
-        </TouchableOpacity>
-      </View>
+      <View style={styles.inner}>
+        <Text style={[styles.header, { color: theme.text }]}>
+          Meu Carrinho
+        </Text>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeAndClear}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Ionicons name="gift" size={64} color={theme.primary} />
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Pedido Realizado!</Text>
-            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>Obrigado pela preferência.{"\n"}Seus itens chegarão em breve.</Text>
-            
-            <TouchableOpacity 
-              style={[styles.modalButton, { backgroundColor: theme.primary }]} 
-              onPress={closeAndClear}
-            >
-              <Text style={styles.modalButtonText}>Fechar e Limpar</Text>
-            </TouchableOpacity>
+        {cart.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons
+              name="cart-outline"
+              size={64}
+              color={theme.textSecondary}
+            />
+            <Text style={{ color: theme.textSecondary }}>
+              Seu carrinho está vazio
+            </Text>
           </View>
-        </View>
-      </Modal>
+        ) : (
+          <>
+            <FlatList
+              data={cart}
+              keyExtractor={item => item.id.toString()}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 160 }}
+            />
+
+            <View
+              style={[
+                styles.summary,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+              ]}
+            >
+              <View style={styles.summaryRow}>
+                <Text style={{ color: theme.textSecondary }}>
+                  Subtotal
+                </Text>
+                <Text style={{ color: theme.text, fontWeight: 'bold' }}>
+                  {formatCurrency(cartTotal)}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.checkoutBtn,
+                  { backgroundColor: theme.primary },
+                ]}
+                onPress={() => navigation.navigate('Checkout')}
+              >
+                <Text style={styles.checkoutText}>
+                  Finalizar Compra
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { marginTop: 10, fontSize: 16 },
-  item: { flexDirection: 'row', padding: 15, marginHorizontal: 15, marginTop: 15, borderRadius: 10, alignItems: 'center', elevation: 2 },
-  image: { width: 60, height: 60, borderRadius: 8, marginRight: 15 },
+  container: { flex: 1, alignItems: 'center' },
+
+  inner: {
+    width: '100%',
+    maxWidth: MAX_WIDTH,
+    padding: 15,
+  },
+
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+
+  empty: {
+    marginTop: 80,
+    alignItems: 'center',
+  },
+
+  card: {
+    flexDirection: 'row',
+    padding: 15,
+    borderRadius: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+
+  image: { width: 80, height: 80, marginRight: 15 },
+
   info: { flex: 1 },
-  title: { fontSize: 16, fontWeight: 'bold' },
-  priceRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
-  price: { fontSize: 14, fontWeight: 'bold', marginRight: 10 },
-  qtyBadge: { fontSize: 12, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, borderTopWidth: 1, elevation: 10 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  totalLabel: { fontSize: 18, fontWeight: 'bold' },
-  totalValue: { fontSize: 20, fontWeight: 'bold', color: '#4CAF50' },
-  checkoutButton: { backgroundColor: '#27ae60', padding: 15, borderRadius: 10, alignItems: 'center' },
+
+  title: { fontSize: 16, fontWeight: '600' },
+
+  price: { fontSize: 18, fontWeight: 'bold', marginVertical: 6 },
+
+  qtyContainer: { flexDirection: 'row', alignItems: 'center' },
+
+  qtyBtn: {
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 6,
+  },
+
+  qtyText: { marginHorizontal: 12, fontWeight: 'bold' },
+
+  summary: {
+    borderTopWidth: 1,
+    padding: 20,
+    borderRadius: 16,
+  },
+
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+
+  checkoutBtn: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+
   checkoutText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: 320, borderRadius: 20, padding: 30, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
-  modalTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 15, marginBottom: 10 },
-  modalMessage: { fontSize: 16, textAlign: 'center', marginBottom: 25, lineHeight: 22 },
-  modalButton: { borderRadius: 10, paddingVertical: 12, paddingHorizontal: 40, elevation: 2 },
-  modalButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 });

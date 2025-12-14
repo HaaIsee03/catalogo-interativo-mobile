@@ -1,6 +1,5 @@
 import { createContext, useContext, useState } from 'react';
 
-// Definição das Cores
 export const themes = {
   light: {
     background: '#F5F7FA',
@@ -17,7 +16,7 @@ export const themes = {
     text: '#E0E0E0',
     textSecondary: '#AAAAAA',
     border: '#333333',
-    primary: '#4A90E2', // Mantemos o azul ou clareamos um pouco
+    primary: '#4A90E2',
     icon: '#FFFFFF'
   }
 };
@@ -25,7 +24,7 @@ export const themes = {
 const ThemeContext = createContext({});
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(false); // Padrão Claro
+  const [isDark, setIsDark] = useState(false);
 
   const toggleTheme = () => {
     setIsDark(!isDark);

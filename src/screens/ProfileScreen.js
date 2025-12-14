@@ -1,77 +1,225 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
-export default function ProfileScreen({ handleLogout }) {
+export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      
-      {/* Cabeçalho do Perfil */}
-      <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
-        <View style={styles.avatarContainer}>
-            <Ionicons name="person-circle" size={80} color={theme.textSecondary} />
-        </View>
-        <Text style={[styles.name, { color: theme.text }]}>Usuário Convidado</Text>
-        <Text style={[styles.email, { color: theme.textSecondary }]}>aluno@unifecaf.edu.br</Text>
+  const Row = ({ icon, label, onPress, right }) => (
+    <TouchableOpacity
+      style={[styles.row, { borderBottomColor: theme.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon} size={22} color={theme.text} />
+        <Text style={[styles.rowText, { color: theme.text }]}>{label}</Text>
       </View>
 
-      {/* Configurações */}
+      {right || (
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={theme.textSecondary}
+        />
+      )}
+    </TouchableOpacity>
+  );
+
+  return (
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: theme.background },
+      ]}
+    >
+      {/* PERFIL */}
+      <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
+        <Ionicons
+          name="person-circle"
+          size={96}
+          color={theme.textSecondary}
+        />
+
+        <Text style={[styles.name, { color: theme.text }]}>
+          {user?.name || 'Usuário'}
+        </Text>
+
+        <Text style={[styles.email, { color: theme.textSecondary }]}>
+          {user?.email || 'email@exemplo.com'}
+        </Text>
+      </View>
+
+      {/* CONTA */}
       <View style={[styles.section, { backgroundColor: theme.surface }]}>
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Configurações</Text>
-        
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          Conta
+        </Text>
+
+        <Row
+          icon="bag-outline"
+          label="Meus pedidos"
+          onPress={() => alert('Pedidos em breve')}
+        />
+
+        <Row
+          icon="location-outline"
+          label="Endereços"
+          onPress={() => alert('Endereços em breve')}
+        />
+
+        <Row
+          icon="card-outline"
+          label="Pagamentos"
+          onPress={() => alert('Pagamentos em breve')}
+        />
+      </View>
+
+      {/* PREFERÊNCIAS */}
+      <View style={[styles.section, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          Preferências
+        </Text>
+
         <View style={[styles.row, { borderBottomColor: theme.border }]}>
           <View style={styles.rowLeft}>
-            <Ionicons name={isDark ? "moon" : "sunny"} size={24} color={theme.text} />
-            <Text style={[styles.rowText, { color: theme.text }]}>Modo Escuro</Text>
+            <Ionicons
+              name={isDark ? 'moon' : 'sunny'}
+              size={22}
+              color={theme.text}
+            />
+            <Text style={[styles.rowText, { color: theme.text }]}>
+              Modo escuro
+            </Text>
           </View>
-          <Switch 
-            value={isDark} 
+
+          <Switch
+            value={isDark}
             onValueChange={toggleTheme}
-            trackColor={{ false: "#767577", true: "#4A90E2" }}
-            thumbColor={isDark ? "#fff" : "#f4f3f4"}
+            trackColor={{ false: '#767577', true: '#4A90E2' }}
+            thumbColor={isDark ? '#fff' : '#f4f3f4'}
           />
         </View>
 
-        <TouchableOpacity style={styles.row}>
-          <View style={styles.rowLeft}>
-             <Ionicons name="notifications-outline" size={24} color={theme.text} />
-             <Text style={[styles.rowText, { color: theme.text }]}>Notificações</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-        </TouchableOpacity>
+        <Row
+          icon="notifications-outline"
+          label="Notificações"
+          onPress={() => alert('Configurações em breve')}
+        />
       </View>
 
-      {/* Botão Sair */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Sair do Aplicativo</Text>
-      </TouchableOpacity>
+      {/* SUPORTE */}
+      <View style={[styles.section, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          Suporte
+        </Text>
 
-    </View>
+        <Row
+          icon="help-circle-outline"
+          label="Central de ajuda"
+          onPress={() => alert('Ajuda em breve')}
+        />
+
+        <Row
+          icon="document-text-outline"
+          label="Termos e privacidade"
+          onPress={() => alert('Termos em breve')}
+        />
+      </View>
+
+      {/* SAIR */}
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={signOut}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="log-out-outline" size={20} color="#fff" />
+        <Text style={styles.logoutText}>Sair da conta</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+
   profileCard: {
-    padding: 20, borderRadius: 16, alignItems: 'center', marginBottom: 20,
-    elevation: 2, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity:0.1, shadowRadius:4
+    borderRadius: 18,
+    paddingVertical: 30,
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  name: { fontSize: 20, fontWeight: 'bold', marginTop: 10 },
-  email: { fontSize: 14, marginBottom: 5 },
+
+  name: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+
+  email: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+
   section: {
-    borderRadius: 16, overflow: 'hidden', marginBottom: 20
+    borderRadius: 16,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
-  sectionTitle: { fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', padding: 15, paddingBottom: 5 },
+
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    padding: 15,
+    paddingBottom: 6,
+  },
+
   row: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 15, borderBottomWidth: 1, borderBottomColor: 'transparent' // Será sobrescrito pelo estilo inline
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
   },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 15 },
-  rowText: { fontSize: 16 },
+
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+
+  rowText: {
+    fontSize: 16,
+  },
+
   logoutButton: {
-    backgroundColor: '#FF3B30', padding: 15, borderRadius: 12, alignItems: 'center'
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#FF3B30',
+    paddingVertical: 15,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoutText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
