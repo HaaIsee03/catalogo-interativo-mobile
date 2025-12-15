@@ -23,9 +23,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-/* ===============================
-   ÍCONE DO CARRINHO COM BADGE
-================================ */
+/* ÍCONE DO CARRINHO COM BADGE */
 function CartIcon({ color, size }) {
   const { cart } = useCart();
 
@@ -46,7 +44,13 @@ function CartIcon({ color, size }) {
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 10,
+              fontWeight: 'bold',
+            }}
+          >
             {cart.length}
           </Text>
         </View>
@@ -55,9 +59,7 @@ function CartIcon({ color, size }) {
   );
 }
 
-/* ===============================
-   TABS PRINCIPAIS
-================================ */
+/* TABS PRINCIPAIS */
 function MainTabs() {
   const { theme } = useTheme();
 
@@ -69,10 +71,12 @@ function MainTabs() {
           backgroundColor: theme.surface,
           borderTopColor: theme.border,
           height: 60,
+          paddingBottom: 5,
         },
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textSecondary,
-        tabBarIcon: ({ color, size, focused }) => {
+        tabBarShowLabel: true,
+        tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
           if (route.name === 'Masculino')
@@ -97,19 +101,18 @@ function MainTabs() {
       </Tab.Screen>
 
       <Tab.Screen name="Carrinho" component={CartScreen} />
+
       <Tab.Screen name="Perfil" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
 
-/* ===============================
-   STACK PRINCIPAL
-================================ */
+/* STACK PRINCIPAL */
 function RootNavigator() {
   const { signed } = useAuth();
   const { theme } = useTheme();
 
-  const navTheme = {
+  const MyNavigationTheme = {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
@@ -118,7 +121,7 @@ function RootNavigator() {
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={MyNavigationTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!signed ? (
           <>
@@ -127,9 +130,16 @@ function RootNavigator() {
           </>
         ) : (
           <>
+            {/* TABS */}
             <Stack.Screen name="Home" component={MainTabs} />
+
+            {/* DETALHES DO PRODUTO */}
             <Stack.Screen name="Details" component={ProductDetailsScreen} />
+
+            {/* CHECKOUT */}
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
+
+            {/* SUCESSO DA COMPRA */}
             <Stack.Screen
               name="CheckoutSuccess"
               component={CheckoutSuccessScreen}
@@ -141,9 +151,7 @@ function RootNavigator() {
   );
 }
 
-/* ===============================
-   APP ROOT
-================================ */
+/* APP (ROOT) */
 export default function AppNavigator() {
   return (
     <AuthProvider>
